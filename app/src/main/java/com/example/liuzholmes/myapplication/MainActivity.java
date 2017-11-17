@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     private class LogInTask extends AsyncTask <String, Integer, Boolean>
     {
+        private String id ;
         @Override
         protected void onPreExecute() {
             // TODO Auto-generated method stub
@@ -51,14 +52,15 @@ public class MainActivity extends AppCompatActivity {
                 stmt = conn.createStatement();
                 String sql;
                 sql = "SELECT password FROM user WHERE id = \'" + params[0] + "\'" ;
-                System.out.println(sql);
+                id = params[0];
+                System.out.println("查询语句为："+ sql);
                 ResultSet rs = stmt.executeQuery(sql);
 
                 // 展开结果集数据库
                 while(rs.next()){
                     // 通过字段检索
                     String password_db = rs.getString("password");
-                    System.out.println(password_db);
+                    System.out.println("对应用户的密码为："+ password_db);
                     if(params[1].equals(password_db))match = true;
                 }
                 // 完成后关闭
@@ -99,6 +101,9 @@ public class MainActivity extends AppCompatActivity {
             if(result)
             {
                 text.setText("Success!");
+                Intent intent=new Intent(MainActivity.this,MyFriendsActivity.class);
+                intent.putExtra("id",id);
+                startActivity(intent);
             }
             else
             {
@@ -119,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     {
         final TextInputLayout idText = (TextInputLayout) findViewById(R.id.textInputLayout_ID);
         final TextInputLayout passwordText = (TextInputLayout) findViewById(R.id.textInputLayout_Pas);
+        Button text = (Button)findViewById(R.id.button_login);
         String id = idText.getEditText().getText().toString();
         String password = passwordText.getEditText().getText().toString();
         new LogInTask().execute(id,password);
