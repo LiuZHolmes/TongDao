@@ -1,25 +1,28 @@
 package com.example.liuzholmes.myapplication;
 
+import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
-public class SignUpActivity extends AppCompatActivity {
+public class FriendInfoActivity extends AppCompatActivity {
 
     private static final String TAG = "ASYNC_TASK";
 
-    private class SignUpTask extends AsyncTask<String, Integer, Boolean>
+    private class ShowFriendInfoTask extends AsyncTask<String, Integer, String>
     {
         @Override
         protected void onPreExecute() {
@@ -29,8 +32,8 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Boolean doInBackground(String... params) {
-            boolean match = false;
+        protected String doInBackground(String... params) {
+            String result="";
             Connection conn = null;
             Statement stmt = null;
             // JDBC 驱动名及数据库 URL
@@ -50,14 +53,18 @@ public class SignUpActivity extends AppCompatActivity {
                 System.out.println(" 实例化Statement对...");
                 stmt = conn.createStatement();
                 String sql;
-                sql = "INSERT INTO user VALUES ( \'" + params[0] + "\',\'" + params[1] + "\',\'" + params[2] + "\')"  ;;
+                sql = "SELECT introduction FROM user WHERE id = \'" + params[0] + "\'" ;;
                 System.out.println("查询语句为："+ sql);
-                int rs = stmt.executeUpdate(sql);
-                if (rs != -1) // 插入成功
+                ResultSet rs = stmt.executeQuery(sql);
+
+                // 展开结果集数据库
+                while(rs.next())
                 {
-                    System.out.println("插入成功");
-                    match = true;
+                    // 通过字段检索
+                    result = rs.getString("introduction");
                 }
+                // 完成后关闭
+                rs.close();
                 stmt.close();
                 conn.close();
             }catch(SQLException se){
@@ -78,7 +85,7 @@ public class SignUpActivity extends AppCompatActivity {
                     se.printStackTrace();
                 }
             }
-            return  match;
+            return result;
         }
 
         @Override
@@ -89,31 +96,20 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(Boolean result) {
-            Button text = (Button)findViewById(R.id.button_SignUp);
-            if(result)
-            {
-                text.setText("Success!");
-            }
-            else
-            {
-                text.setText("Failed!");
-            }
+        protected void onPostExecute(String result)
+        {
+            TextView introduction =  (TextView) findViewById(R.id.textView_FriendIntroduction);
+            introduction.setText(result);
         }
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign_up);
-    }
-    public void onClick_SignUp(View view)
-    {
-        final TextInputLayout idText = (TextInputLayout) findViewById(R.id.textInputLayout_ID);
-        final TextInputLayout passwordText = (TextInputLayout) findViewById(R.id.textInputLayout_Pas);
-        final EditText introductionText = (EditText) findViewById(R.id.editText_Introduction);
-        String id = idText.getEditText().getText().toString();
-        String password = passwordText.getEditText().getText().toString();
-        String introduction = introductionText.getText().toString();
-        new SignUpTask().execute(id,password,introduction);
+        setContentView(R.layout.activity_friend_info);
+        Intent intent = getIntent();
+        String id = intent.getStringExtra("id");
+        TextView introduction =  (TextView) findViewById(R.id.textView_FriendId);
+        introduction.setText(id);
+        new ShowFriendInfoTask().execute(id);
     }
 }

@@ -1,25 +1,28 @@
 package com.example.liuzholmes.myapplication;
 
+import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ListView;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
-public class SignUpActivity extends AppCompatActivity {
+public class MyFriendsActivity extends AppCompatActivity {
 
     private static final String TAG = "ASYNC_TASK";
 
-    private class SignUpTask extends AsyncTask<String, Integer, Boolean>
+    private class ShowFriendsTask extends AsyncTask<String, Integer, String[]>
     {
         @Override
         protected void onPreExecute() {
@@ -29,8 +32,8 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Boolean doInBackground(String... params) {
-            boolean match = false;
+        protected String[] doInBackground(String... params) {
+            ArrayList<String> friends = new ArrayList<String>();
             Connection conn = null;
             Statement stmt = null;
             // JDBC 驱动名及数据库 URL
@@ -50,14 +53,20 @@ public class SignUpActivity extends AppCompatActivity {
                 System.out.println(" 实例化Statement对...");
                 stmt = conn.createStatement();
                 String sql;
-                sql = "INSERT INTO user VALUES ( \'" + params[0] + "\',\'" + params[1] + "\',\'" + params[2] + "\')"  ;;
+                sql = "SELECT second FROM relation WHERE first = \'" + params[0] + "\'" ;;
                 System.out.println("查询语句为："+ sql);
-                int rs = stmt.executeUpdate(sql);
-                if (rs != -1) // 插入成功
+                ResultSet rs = stmt.executeQuery(sql);
+
+                // 展开结果集数据库
+                while(rs.next())
                 {
-                    System.out.println("插入成功");
-                    match = true;
+                    // 通过字段检索
+                    String friendId = rs.getString("second");
+                    friends.add(friendId);
+
                 }
+                // 完成后关闭
+                rs.close();
                 stmt.close();
                 conn.close();
             }catch(SQLException se){
@@ -78,7 +87,7 @@ public class SignUpActivity extends AppCompatActivity {
                     se.printStackTrace();
                 }
             }
-            return  match;
+            return (String[]) friends.toArray(new String[0]);
         }
 
         @Override
@@ -89,31 +98,29 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(Boolean result) {
-            Button text = (Button)findViewById(R.id.button_SignUp);
-            if(result)
-            {
-                text.setText("Success!");
-            }
-            else
-            {
-                text.setText("Failed!");
-            }
+        protected void onPostExecute(String[] result)
+        {
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(MyFriendsActivity.this,android.R.layout.simple_list_item_1,result);
+            final ListView Friends = (ListView) findViewById(R.id.ListView_Friends);
+            Friends.setAdapter(adapter);
+            Friends.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    String friendId = Friends.getItemAtPosition(i).toString();
+                    Intent intent=new Intent(MyFriendsActivity.this,FriendInfoActivity.class);
+                    intent.putExtra("id",friendId);
+                    startActivity(intent);
+                }
+            });
         }
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign_up);
-    }
-    public void onClick_SignUp(View view)
-    {
-        final TextInputLayout idText = (TextInputLayout) findViewById(R.id.textInputLayout_ID);
-        final TextInputLayout passwordText = (TextInputLayout) findViewById(R.id.textInputLayout_Pas);
-        final EditText introductionText = (EditText) findViewById(R.id.editText_Introduction);
-        String id = idText.getEditText().getText().toString();
-        String password = passwordText.getEditText().getText().toString();
-        String introduction = introductionText.getText().toString();
-        new SignUpTask().execute(id,password,introduction);
+        setContentView(R.layout.activity_my_friends);
+        Intent intent = getIntent();
+        String id = intent.getStringExtra("id");
+        new ShowFriendsTask().execute(id);
     }
 }
