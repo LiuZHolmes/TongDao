@@ -120,14 +120,24 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void onClick_login(View view)
+    public void onClick_login(View view) {
+        final TextInputLayout idText = (TextInputLayout) findViewById(R.id.textInputLayout_ID);
+        final TextInputLayout passwordText = (TextInputLayout) findViewById(R.id.textInputLayout_Pas);
+        String id = idText.getEditText().getText().toString();
+        String password = passwordText.getEditText().getText().toString();
+        new LogInTask().execute(id, password);
+    }
+
+    public void onClick_TeamB(View view)
     {
         final TextInputLayout idText = (TextInputLayout) findViewById(R.id.textInputLayout_ID);
         final TextInputLayout passwordText = (TextInputLayout) findViewById(R.id.textInputLayout_Pas);
-        Button text = (Button)findViewById(R.id.button_login);
         String id = idText.getEditText().getText().toString();
         String password = passwordText.getEditText().getText().toString();
-        new LogInTask().execute(id,password);
+        //没有验证用户和密码直接跳转，测试用按钮
+        Intent intent=new Intent(MainActivity.this,MyFriendsActivity.class);
+        intent.putExtra("id",id);
+        startActivity(intent);
     }
     public void onClick_ToSignUp(View view)
     {
